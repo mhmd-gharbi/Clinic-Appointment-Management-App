@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -9,11 +12,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { Search, Trash2, Edit, Eye } from "lucide-react"
 
 export default function DoctorsPage() {
-  const doctors = [
+  const [doctors, setDoctors] = useState([
     {
       name: "Dr. Ammar",
       role: "Professors",
@@ -42,7 +52,12 @@ export default function DoctorsPage() {
       phone: "+0123456789",
       email: "ali@gmail.com",
     },
-  ]
+  ])
+
+  const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null)
 
   return (
     <div className="space-y-6">
@@ -74,7 +89,10 @@ export default function DoctorsPage() {
             </select>
 
             <div className="ml-auto">
-              <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+              <Button
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                onClick={() => setAddModalOpen(true)}
+              >
                 + Add Doctor
               </Button>
             </div>
@@ -108,8 +126,20 @@ export default function DoctorsPage() {
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Trash2 className="w-5 h-5 text-red-500 cursor-pointer" />
-                    <Edit className="w-5 h-5 text-green-600 cursor-pointer" />
-                    <Eye className="w-5 h-5 text-blue-600 cursor-pointer" />
+                    <Edit
+                      className="w-5 h-5 text-green-600 cursor-pointer"
+                      onClick={() => {
+                        setSelectedDoctor(doc)
+                        setEditModalOpen(true)
+                      }}
+                    />
+                    <Eye
+                      className="w-5 h-5 text-blue-600 cursor-pointer"
+                      onClick={() => {
+                        setSelectedDoctor(doc)
+                        setViewModalOpen(true)
+                      }}
+                    />
                   </div>
                 </TableCell>
               </TableRow>
@@ -117,6 +147,111 @@ export default function DoctorsPage() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* View Doctor Modal */}
+      <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+        <DialogContent className="max-w-md w-full">
+          <DialogHeader>
+            <DialogTitle>View Doctor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 mt-2">
+            <p>
+              <strong>Name:</strong> {selectedDoctor?.name}
+            </p>
+            <p>
+              <strong>Role:</strong> {selectedDoctor?.role}
+            </p>
+            <p>
+              <strong>Specialty:</strong> {selectedDoctor?.specialty}
+            </p>
+            <p>
+              <strong>Phone:</strong> {selectedDoctor?.phone}
+            </p>
+            <p>
+              <strong>Email:</strong> {selectedDoctor?.email}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewModalOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Doctor Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="max-w-md w-full">
+          <DialogHeader>
+            <DialogTitle>Edit Doctor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input defaultValue={selectedDoctor?.name} />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Input defaultValue={selectedDoctor?.role} />
+            </div>
+            <div className="space-y-2">
+              <Label>Specialty</Label>
+              <Input defaultValue={selectedDoctor?.specialty} />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input defaultValue={selectedDoctor?.phone} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input defaultValue={selectedDoctor?.email} />
+            </div>
+          </div>
+          <DialogFooter className="mt-4 flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="bg-blue-600 hover:bg-blue-700">Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Doctor Modal */}
+      <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
+        <DialogContent className="max-w-md w-full">
+          <DialogHeader>
+            <DialogTitle>Add Doctor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input placeholder="Name" />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Input placeholder="Role" />
+            </div>
+            <div className="space-y-2">
+              <Label>Specialty</Label>
+              <Input placeholder="Specialty" />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input placeholder="Phone" />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input placeholder="Email" />
+            </div>
+          </div>
+          <DialogFooter className="mt-4 flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setAddModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="bg-blue-600 hover:bg-blue-700">Add</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,21 +1,15 @@
-import React from "react"
-import "@/app/globals.css"
+import { ReactNode } from "react"
+import PatientSidebar from "@/components/layout/patient/PatientSidebar"
+import PatientTopbar from "@/components/layout/patient/PatientTopbar"
 
-import AdminSidebar from "@/components/layout/admin/AdminSidebar"
-import AdminTopbar from "@/components/layout/admin/AdminTopbar"
-
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function PatientLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="flex h-screen bg-gray-100">
         <div className="flex w-full h-full">
-          <AdminSidebar />
+          <PatientSidebar />
           <div className="flex-1 flex flex-col">
-            <AdminTopbar />
+            <PatientTopbar />
             <main className="p-6 overflow-y-auto">{children}</main>
           </div>
         </div>
