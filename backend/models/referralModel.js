@@ -1,31 +1,42 @@
 const pool = require("../config/db");
 
 /**
- * Referral model: manages doctor-to-doctor referral letters for patients.
+ * Referral model: Manages referral letters between doctors
+ * for patient cases that require a transfer or second opinion.
  */
 const Referral = {
+
   /**
-   * Create a new referral letter from one doctor to another for a client.
-   * @param {Object} data - Includes appointmentId, fromDoctorId, toDoctorId, clientId, reason, createdAt.
-   * @returns {number} New referral ID.
+   * Create a new referral letter from one doctor to another for a patient.
+   * @param {Object} data - Referral fields: appointmentId, fromDoctorId, toDoctorId, clientId, reason, createdAt.
+   * @returns {number} Newly created referral ID.
    */
   create: async ({ appointmentId, fromDoctorId, toDoctorId, clientId, reason, createdAt }) => {
-    const sql = "INSERT INTO referrals (appointment_id, from_doctor_id, to_doctor_id, client_id, reason, created_at) VALUES (?, ?, ?, ?, ?, ?)";
-    const [result] = await pool.execute(sql, [
-      appointmentId,    // ID of the relevant appointment
-      fromDoctorId,     // Doctor who creates the referral
-      toDoctorId,       // Specialist (doctor) to refer to
-      clientId,         // Patient's user ID
-      reason,           // Reason for referral
-      createdAt,        // Date of referral creation (YYYY-MM-DD)
-    ]);
-    return result.insertId;
+    try {
+      const sql = `
+        INSERT INTO referrals
+        (appointment_id, from_doctor_id, to_doctor_id, client_id, reason, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      const [result] = await pool.execute(sql, [
+        appointmentId,
+        fromDoctorId,
+        toDoctorId,
+        clientId,
+        reason,
+        createdAt,
+      ]);
+      return result.insertId;
+    } catch (error) {
+      // Log or rethrow for controller to handle
+      throw new Error("Failed to create referral: " + error.message);
+    }
   },
 
   /**
-   * Find all referrals for a client.
+   * Retrieve all referrals for a specific client (patient).
    * @param {number} clientId
-   * @returns {Array} List of referrals for the client.
+   * @returns {Array} List of referrals for this client.
    */
   findByClient: async (clientId) => {
     const sql = "SELECT * FROM referrals WHERE client_id = ?";
@@ -34,9 +45,9 @@ const Referral = {
   },
 
   /**
-   * Find all referrals made by a doctor.
+   * Retrieve all referrals sent by a specific doctor.
    * @param {number} fromDoctorId
-   * @returns {Array} List of referrals sent by this doctor.
+   * @returns {Array} List of referrals initiated by this doctor.
    */
   findByFromDoctor: async (fromDoctorId) => {
     const sql = "SELECT * FROM referrals WHERE from_doctor_id = ?";
@@ -45,9 +56,9 @@ const Referral = {
   },
 
   /**
-   * Find all referrals received by a doctor (doctor to whom clients are referred).
+   * Retrieve all referrals received by a specific doctor.
    * @param {number} toDoctorId
-   * @returns {Array} List of referrals received by this doctor.
+   * @returns {Array} List of referrals addressed to this doctor.
    */
   findByToDoctor: async (toDoctorId) => {
     const sql = "SELECT * FROM referrals WHERE to_doctor_id = ?";
@@ -56,7 +67,7 @@ const Referral = {
   },
 
   /**
-   * Find referral by ID.
+   * Find a referral record by its unique ID.
    * @param {number} id
    * @returns {Object} Referral object.
    */
@@ -67,15 +78,36 @@ const Referral = {
   },
 
   /**
-   * Update referral reason.
+   * Update referral reason or linked doctors/appointment.
    * @param {number} id - Referral ID.
-   * @param {string} reason - New reason for referral.
+   * @param {Object} updateData - Fields to update.
    * @returns {boolean} Success state.
    */
-  updateReason: async (id, reason) => {
-    const sql = "UPDATE referrals SET reason = ? WHERE id = ?";
-    const [result] = await pool.execute(sql, [reason, id]);
-    return result.affectedRows > 0;
+  update: async (
+    id,
+    { appointmentId, fromDoctorId, toDoctorId, clientId, reason, createdAt }
+  ) => {
+    try {
+      const sql = `
+        UPDATE referrals
+        SET appointment_id = ?, from_doctor_id = ?, to_doctor_id = ?,
+            client_id = ?, reason = ?, created_at = ?
+        WHERE id = ?
+      `;
+      const [result] = await pool.execute(sql, [
+        appointmentId,
+        fromDoctorId,
+        toDoctorId,
+        clientId,
+        reason,
+        createdAt,
+        id,
+      ]);
+      return result.affectedRows > 0;
+    } catch (error) {
+      // Log or rethrow for controller to handle
+      throw new Error("Failed to update referral: " + error.message);
+    }
   },
 
   /**
@@ -84,10 +116,14 @@ const Referral = {
    * @returns {boolean} Success state.
    */
   delete: async (id) => {
-    const sql = "DELETE FROM referrals WHERE id = ?";
-    const [result] = await pool.execute(sql, [id]);
-    return result.affectedRows > 0;
+    try {
+      const sql = "DELETE FROM referrals WHERE id = ?";
+      const [result] = await pool.execute(sql, [id]);
+      return result.affectedRows > 0;
+    } catch (error) {
+      throw new Error("Failed to delete referral: " + error.message);
+    }
   },
 };
 
-module.exports = Referral;
+module.exports = Referral;
