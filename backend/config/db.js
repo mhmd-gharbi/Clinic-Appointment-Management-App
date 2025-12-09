@@ -14,8 +14,8 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   ssl: {
-    rejectUnauthorized: true,
-    ca: fs.readFileSync(path.join(__dirname, "ca.pem")).toString(),
+    minVersion: "TLSv1.2",
+    ca: fs.readFileSync(path.join(__dirname, "ca.pem")),
   },
 })
 
