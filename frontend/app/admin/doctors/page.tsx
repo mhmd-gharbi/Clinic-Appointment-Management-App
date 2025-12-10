@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label"
 import { Search, Trash2, Edit, Eye } from "lucide-react"
 
 export default function DoctorsPage() {
-  const [doctors, setDoctors] = useState([])
+  const [doctors, setDoctors] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
