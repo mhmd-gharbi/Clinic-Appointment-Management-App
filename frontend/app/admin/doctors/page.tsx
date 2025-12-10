@@ -93,49 +93,67 @@ export default function DoctorsPage() {
       </Card>
 
       {/* Data Table */}
-      <Card>
+      <Card className="shadow-sm border-none">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Specialty</TableHead>
-              <TableHead>Phone Number</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead className="font-semibold text-gray-700">Name</TableHead>
+              <TableHead className="font-semibold text-gray-700">Role</TableHead>
+              <TableHead className="font-semibold text-gray-700">Specialty</TableHead>
+              <TableHead className="font-semibold text-gray-700">Phone Number</TableHead>
+              <TableHead className="font-semibold text-gray-700">Email</TableHead>
+              <TableHead className="font-semibold text-gray-700 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody>
-            {doctors.map((doc) => (
-              <TableRow key={doc.email}>
-                <TableCell>{doc.name}</TableCell>
-                <TableCell>{doc.role}</TableCell>
-                <TableCell>{doc.specialty}</TableCell>
-                <TableCell>{doc.phone}</TableCell>
-                <TableCell>{doc.email}</TableCell>
-
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Trash2 className="w-5 h-5 text-red-500 cursor-pointer" />
-                    <Edit
-                      className="w-5 h-5 text-green-600 cursor-pointer"
-                      onClick={() => {
-                        setSelectedDoctor(doc)
-                        setEditModalOpen(true)
-                      }}
-                    />
-                    <Eye
-                      className="w-5 h-5 text-blue-600 cursor-pointer"
-                      onClick={() => {
-                        setSelectedDoctor(doc)
-                        setViewModalOpen(true)
-                      }}
-                    />
-                  </div>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10 text-gray-500">
+                  Loading doctors...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : doctors.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10 text-gray-500">
+                  No doctors found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              doctors.map((doc) => (
+                <TableRow key={doc.email} className="hover:bg-blue-50/50 transition-colors">
+                  <TableCell className="font-medium">{doc.name}</TableCell>
+                  <TableCell>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                      {doc.role}
+                    </span>
+                  </TableCell>
+                  <TableCell>{doc.specialty}</TableCell>
+                  <TableCell>{doc.phone}</TableCell>
+                  <TableCell className="text-gray-500">{doc.email}</TableCell>
+
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-100" onClick={() => {
+                        setSelectedDoctor(doc)
+                        setViewModalOpen(true)
+                      }}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100" onClick={() => {
+                        setSelectedDoctor(doc)
+                        setEditModalOpen(true)
+                      }}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </Card>

@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Eye, Edit, Trash2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -89,7 +90,7 @@ export default function AppointmentsPage() {
 
   return (
     <div>
-      <Card className="w-full shadow-sm border">
+      <Card className="shadow-sm border-none">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-semibold">Appointments</CardTitle>
 
@@ -106,52 +107,51 @@ export default function AppointmentsPage() {
 
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-gray-50">
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead>Doctor</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="font-semibold text-gray-700">ID</TableHead>
+                <TableHead className="font-semibold text-gray-700">Patient</TableHead>
+                <TableHead className="font-semibold text-gray-700">Doctor</TableHead>
+                <TableHead className="font-semibold text-gray-700">Date</TableHead>
+                <TableHead className="font-semibold text-gray-700">Time</TableHead>
+                <TableHead className="font-semibold text-gray-700">Status</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {appointments.map((appt) => (
-                <TableRow key={appt.id}>
-                  <TableCell>{appt.id}</TableCell>
+                <TableRow key={appt.id} className="hover:bg-blue-50/50 transition-colors">
+                  <TableCell className="font-medium">#{appt.id}</TableCell>
                   <TableCell>{appt.patient}</TableCell>
                   <TableCell>{appt.doctor}</TableCell>
                   <TableCell>{appt.date}</TableCell>
                   <TableCell>{appt.time}</TableCell>
                   <TableCell>
-                    <Badge className={statusColors[appt.status]}>
-                      {appt.status}
+                    <Badge
+                      className={`${statusColors[appt.status]} hover:${statusColors[appt.status]} px-3 py-1 font-normal`}
+                    >
+                      {appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-100" onClick={() => {
                         setSelectedAppt(appt)
                         setViewModalOpen(true)
-                      }}
-                    >
-                      View
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
-                      onClick={() => {
+                      }}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100" onClick={() => {
                         setSelectedAppt(appt)
                         setEditModalOpen(true)
-                      }}
-                    >
-                      Edit
-                    </Button>
+                      }}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
