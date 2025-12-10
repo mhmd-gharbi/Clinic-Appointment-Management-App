@@ -36,6 +36,22 @@ async function migrate() {
     `)
 
     await connection.query(`
+      CREATE TABLE IF NOT EXISTS patients (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id INT UNSIGNED NOT NULL UNIQUE,
+        date_of_birth DATE,
+        gender ENUM('male', 'female', 'other'),
+        address TEXT,
+        medical_history TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_patient_user
+          FOREIGN KEY (user_id) REFERENCES users(id)
+          ON DELETE CASCADE
+      ) ENGINE=InnoDB;
+    `)
+
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS appointments (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         client_id INT UNSIGNED NOT NULL,

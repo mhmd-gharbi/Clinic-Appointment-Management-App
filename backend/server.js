@@ -34,3 +34,6 @@ app.use('/api/users', userRoutes);
 
 const referralRoutes = require('./routes/referral');
 app.use('/api/referrals', referralRoutes);
+
+const patientRoutes = require('./routes/patient');
+app.use('/api/patients', patientRoutes);

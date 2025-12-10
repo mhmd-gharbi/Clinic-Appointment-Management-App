@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -38,6 +38,25 @@ export default function AddConsultationModal({
   })
   const [report, setReport] = useState({ type: "", results: "" })
   const [referral, setReferral] = useState({ toDoctorId: "", reason: "" })
+  const [doctorsList, setDoctorsList] = useState([])
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await fetch("https://clinic-appointment-management-app.onrender.com/api/doctors")
+        if (response.ok) {
+          const data = await response.json()
+          setDoctorsList(data)
+        }
+      } catch (error) {
+        console.error("Error fetching doctors:", error)
+      }
+    }
+
+    if (open) {
+      fetchDoctors()
+    }
+  }, [open])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -152,8 +171,11 @@ export default function AddConsultationModal({
                 <SelectValue placeholder="Refer to doctor" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">Dr. Sarah Johnson</SelectItem>
-                <SelectItem value="2">Dr. Ahmed Karim</SelectItem>
+                {doctorsList.map((doctor: any) => (
+                  <SelectItem key={doctor._id || doctor.id || doctor.email} value={doctor.name}>
+                    {doctor.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Textarea

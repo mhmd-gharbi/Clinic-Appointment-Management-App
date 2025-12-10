@@ -1,22 +1,47 @@
+"use client"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { LayoutDashboard, Calendar, Stethoscope, Users, Settings } from "lucide-react"
 
-const items = ["Dashboard", "Appointments", "Doctors", "Patients", "Settings"]
+const items = [
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Appointments", href: "/admin/appointments", icon: Calendar },
+  { name: "Doctors", href: "/admin/doctors", icon: Stethoscope },
+  { name: "Patients", href: "/admin/patients", icon: Users },
+  { name: "Settings", href: "/admin/settings", icon: Settings },
+]
 
 export default function AdminSidebar() {
+  const pathname = usePathname() // You might need to make this component client-side if it uses hooks
+
   return (
-    <aside className="w-64 bg-white border-r p-4 space-y-6">
-      <div className="text-2xl font-bold text-blue-600">Clinic.</div>
-      <nav className="space-y-2">
-        {items.map((item) => (
-          <Link
-            key={item}
-            href={`/admin/${item.toLowerCase()}`}
-            className="block p-2 rounded-lg hover:bg-blue-50"
-          >
-            {item}
-          </Link>
-        ))}
+    <aside className="w-64 bg-white border-r flex flex-col h-full shadow-sm">
+      <div className="p-6">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+          Clinic.
+        </h1>
+      </div>
+      <nav className="flex-1 px-4 space-y-2">
+        {items.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive
+                ? "bg-blue-50 text-blue-600"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+            >
+              <item.icon className={`w-5 h-5 ${isActive ? "text-blue-600" : "text-gray-500"}`} />
+              {item.name}
+            </Link>
+          )
+        })}
       </nav>
+      <div className="p-4 border-t">
+        <p className="text-xs text-gray-400 text-center">© 2025 Clinic App</p>
+      </div>
     </aside>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +33,24 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 export default function PatientAppointmentsPage() {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
   const [bookModalOpen, setBookModalOpen] = useState(false)
+  const [doctorsList, setDoctorsList] = useState([])
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await fetch("https://clinic-appointment-management-app.onrender.com/api/doctors")
+        if (response.ok) {
+          const data = await response.json()
+          setDoctorsList(data)
+        }
+      } catch (error) {
+        console.error("Error fetching doctors:", error)
+      }
+    }
+    if (bookModalOpen) {
+      fetchDoctors()
+    }
+  }, [bookModalOpen])
 
   const appointments = [
     {
@@ -99,9 +117,11 @@ export default function PatientAppointmentsPage() {
                       <SelectValue placeholder="Choose doctor" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Dr. Sarah Johnson</SelectItem>
-                      <SelectItem value="2">Dr. Ahmed Karim</SelectItem>
-                      <SelectItem value="3">Dr. Lina Mohamed</SelectItem>
+                      {doctorsList.map((doctor: any) => (
+                        <SelectItem key={doctor._id || doctor.id || doctor.email} value={doctor.name}>
+                          {doctor.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

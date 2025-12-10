@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -23,36 +23,28 @@ import { Label } from "@/components/ui/label"
 import { Search, Trash2, Edit, Eye } from "lucide-react"
 
 export default function DoctorsPage() {
-  const [doctors, setDoctors] = useState([
-    {
-      name: "Dr. Ammar",
-      role: "Professors",
-      specialty: "Dermatology",
-      phone: "+0123456789",
-      email: "ammar@gmail.com",
-    },
-    {
-      name: "Dr. Khan",
-      role: "Medical expert",
-      specialty: "Dermatology",
-      phone: "+0123456789",
-      email: "khan@gmail.com",
-    },
-    {
-      name: "Dr. Abdullah",
-      role: "Communicator",
-      specialty: "Neurology",
-      phone: "+0123456789",
-      email: "abdullah@gmail.com",
-    },
-    {
-      name: "Dr. Alia",
-      role: "Collaborator",
-      specialty: "Family medicine",
-      phone: "+0123456789",
-      email: "ali@gmail.com",
-    },
-  ])
+  const [doctors, setDoctors] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await fetch("https://clinic-appointment-management-app.onrender.com/api/doctors")
+        if (response.ok) {
+          const data = await response.json()
+          setDoctors(data)
+        } else {
+          console.error("Failed to fetch doctors")
+        }
+      } catch (error) {
+        console.error("Error fetching doctors:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDoctors()
+  }, [])
 
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
