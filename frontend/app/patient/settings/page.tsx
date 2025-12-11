@@ -10,12 +10,7 @@ import { Bell, Lock, User } from "lucide-react"
 export default function PatientSettingsPage() {
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-                    <p className="text-sm text-gray-500">Manage your account settings and preferences.</p>
-                </div>
-            </div>
+
 
             <Tabs defaultValue="profile" className="space-y-6">
                 <TabsList className="bg-white border text-gray-500">

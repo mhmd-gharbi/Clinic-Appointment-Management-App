@@ -29,12 +29,36 @@ export default function DoctorsPage() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await fetch("https://clinic-appointment-management-app.onrender.com/api/doctors")
-        if (response.ok) {
-          const data = await response.json()
-          setDoctors(data)
+        const [doctorsRes, usersRes] = await Promise.all([
+          fetch("https://clinic-appointment-management-app.onrender.com/api/doctors"),
+          fetch("https://clinic-appointment-management-app.onrender.com/api/users")
+        ])
+
+        if (doctorsRes.ok && usersRes.ok) {
+          const doctorsData = await doctorsRes.json()
+          const usersData = await usersRes.json()
+
+          const mappedDoctors = doctorsData.map((d: any) => {
+            const user = usersData.find((u: any) => u.id === d.user_id)
+            if (user) {
+              return {
+                ...d,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                phone: user.phone,
+                role: user.role,
+                name: `${user.first_name} ${user.last_name}`
+              }
+            }
+            return {
+              ...d,
+              name: d.name || `${d.first_name || ''} ${d.last_name || ''}`.trim() || "Unknown"
+            }
+          })
+          setDoctors(mappedDoctors)
         } else {
-          console.error("Failed to fetch doctors")
+          console.error("Failed to fetch doctors or users")
         }
       } catch (error) {
         console.error("Error fetching doctors:", error)
@@ -56,12 +80,7 @@ export default function DoctorsPage() {
       {/* Page Title */}
       <Card>
         <CardContent className="p-6 space-y-4">
-          <div>
-            <h1 className="text-2xl font-semibold">Doctors</h1>
-            <p className="text-sm text-gray-500">
-              Showing {doctors.length} of {doctors.length}
-            </p>
-          </div>
+
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-4">
@@ -121,7 +140,7 @@ export default function DoctorsPage() {
               </TableRow>
             ) : (
               doctors.map((doc) => (
-                <TableRow key={doc.email} className="hover:bg-blue-50/50 transition-colors">
+                <TableRow key={doc.id} className="hover:bg-blue-50/50 transition-colors">
                   <TableCell className="font-medium">{doc.name}</TableCell>
                   <TableCell>
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">

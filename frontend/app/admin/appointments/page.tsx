@@ -92,7 +92,7 @@ export default function AppointmentsPage() {
     <div>
       <Card className="shadow-sm border-none">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-xl font-semibold">Appointments</CardTitle>
+
 
           <div className="flex items-center gap-2">
             <Input placeholder="Search patient or doctor..." className="w-64" />

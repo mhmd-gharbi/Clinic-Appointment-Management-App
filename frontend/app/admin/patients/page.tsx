@@ -58,12 +58,7 @@ export default function PatientsPage() {
       {/* Page Title */}
       <Card>
         <CardContent className="p-6 space-y-4">
-          <div>
-            <h1 className="text-2xl font-semibold">Patients</h1>
-            <p className="text-sm text-gray-500">
-              Showing {patients.length} of {patients.length}
-            </p>
-          </div>
+
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-4">

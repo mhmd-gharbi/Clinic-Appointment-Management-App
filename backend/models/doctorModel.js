@@ -22,7 +22,12 @@ const Doctor = {
    * @returns {Object} Doctor details
    */
   findByUserId: async (userId) => {
-    const sql = "SELECT * FROM doctors WHERE user_id = ?";
+    const sql = `
+      SELECT d.*, u.first_name, u.last_name, u.email, u.phone, u.role
+      FROM doctors d
+      JOIN users u ON d.user_id = u.id
+      WHERE d.user_id = ?
+    `;
     const [rows] = await pool.execute(sql, [userId]);
     return rows[0];
   },
@@ -43,7 +48,11 @@ const Doctor = {
    * @returns {Array} All doctors.
    */
   findAll: async () => {
-    const sql = "SELECT * FROM doctors";
+    const sql = `
+      SELECT d.*, u.first_name, u.last_name, u.email, u.phone, u.role
+      FROM doctors d
+      JOIN users u ON d.user_id = u.id
+    `;
     const [rows] = await pool.execute(sql);
     return rows;
   },

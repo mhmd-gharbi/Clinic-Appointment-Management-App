@@ -48,10 +48,7 @@ export default function DashboardLayout() {
 
   return (
     <main className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
-        <div className="text-sm text-gray-500">Welcome back, Admin</div>
-      </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
