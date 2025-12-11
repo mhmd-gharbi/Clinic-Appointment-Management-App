@@ -52,32 +52,31 @@ export default function PatientAppointmentsPage() {
     }
   }, [bookModalOpen])
 
-  const appointments = [
-    {
-      id: 1,
-      doctor: "Dr. Sarah Johnson",
-      date: "2025-12-30",
-      time: "10:00 AM",
-      status: "upcoming",
-      notes: "Regular checkup. Bring previous blood test results.",
-    },
-    {
-      id: 2,
-      doctor: "Dr. Ahmed Karim",
-      date: "2025-12-22",
-      time: "02:00 PM",
-      status: "completed",
-      notes: "Follow-up after prescription. All vitals normal.",
-    },
-    {
-      id: 3,
-      doctor: "Dr. Lina Mohamed",
-      date: "2025-12-10",
-      time: "09:30 AM",
-      status: "cancelled",
-      notes: "Appointment cancelled by patient due to travel.",
-    },
-  ]
+  const [appointments, setAppointments] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        // Hardcoded client ID 51 for demo purposes
+        const res = await fetch("https://clinic-appointment-management-app.onrender.com/api/appointments/client/51")
+        if (res.ok) {
+          const data = await res.json()
+          const mapped = data.map((appt: any) => ({
+            id: appt.id,
+            doctor: `Dr. ${appt.doctor_first_name} ${appt.doctor_last_name}`,
+            date: new Date(appt.date).toLocaleDateString(),
+            time: appt.time,
+            status: appt.status || 'scheduled',
+            notes: appt.type // using type as notes/category for now
+          }))
+          setAppointments(mapped)
+        }
+      } catch (error) {
+        console.error("Error fetching appointments:", error)
+      }
+    }
+    fetchAppointments()
+  }, [])
 
   const statusColors: Record<string, string> = {
     upcoming: "bg-blue-600",

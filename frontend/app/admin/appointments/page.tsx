@@ -31,38 +31,42 @@ import {
 } from "@/components/ui/select"
 
 export default function AppointmentsPage() {
-  const [appointments, setAppointments] = useState([
-    {
-      id: 1,
-      patient: "John Doe",
-      doctor: "Dr. Ahmed",
-      date: "2025-01-12",
-      time: "10:30",
-      status: "confirmed",
-    },
-    {
-      id: 2,
-      patient: "Sarah Smith",
-      doctor: "Dr. Karim",
-      date: "2025-01-13",
-      time: "09:00",
-      status: "pending",
-    },
-    {
-      id: 3,
-      patient: "Michael Brown",
-      doctor: "Dr. Sara",
-      date: "2025-01-13",
-      time: "14:00",
-      status: "cancelled",
-    },
-  ])
+  const [appointments, setAppointments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   const statusColors: Record<string, string> = {
-    confirmed: "bg-green-500",
-    pending: "bg-yellow-500",
+    scheduled: "bg-blue-500",
+    completed: "bg-green-500",
     cancelled: "bg-red-500",
+    normal: "bg-gray-500",
+    urgent: "bg-orange-500"
   }
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const res = await fetch("https://clinic-appointment-management-app.onrender.com/api/appointments")
+        if (res.ok) {
+          const data = await res.json()
+          const mapped = data.map((appt: any) => ({
+            id: appt.id,
+            patient: `${appt.client_first_name} ${appt.client_last_name}`,
+            doctor: `Dr. ${appt.doctor_first_name} ${appt.doctor_last_name}`,
+            date: new Date(appt.date).toLocaleDateString(),
+            time: appt.time,
+            status: appt.status || 'scheduled',
+            type: appt.type
+          }))
+          setAppointments(mapped)
+        }
+      } catch (error) {
+        console.error("Error fetching appointments:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAppointments()
+  }, [])
 
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)

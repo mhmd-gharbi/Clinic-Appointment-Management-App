@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Stethoscope, Calendar, Settings } from "lucide-react"
+import { LayoutDashboard, Stethoscope, Calendar, Settings, CalendarCheck } from "lucide-react"
 
 const items = [
   { name: "Dashboard", href: "/doctor/dashboard", icon: LayoutDashboard },
+  { name: "Appointments", href: "/doctor/appointments", icon: CalendarCheck },
   { name: "Consultation", href: "/doctor/consultation", icon: Stethoscope },
   { name: "Schedule", href: "/doctor/schedule", icon: Calendar },
   { name: "Settings", href: "/doctor/settings", icon: Settings },

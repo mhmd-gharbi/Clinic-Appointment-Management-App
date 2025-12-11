@@ -23,12 +23,39 @@ const Appointment = {
   },
 
   /**
+   * Find all appointments (for Admin).
+   * @returns {Array} List of all appointments with client and doctor names.
+   */
+  findAll: async () => {
+    const sql = `
+      SELECT a.*, 
+             c.first_name as client_first_name, c.last_name as client_last_name,
+             d_user.first_name as doctor_first_name, d_user.last_name as doctor_last_name, d.specialty
+      FROM appointments a
+      JOIN users c ON a.client_id = c.id
+      JOIN doctors d ON a.doctor_id = d.id
+      JOIN users d_user ON d.user_id = d_user.id
+      ORDER BY a.date DESC, a.time DESC
+    `;
+    const [rows] = await pool.execute(sql);
+    return rows;
+  },
+
+  /**
    * Find all appointments for a specific client.
    * @param {number} clientId
-   * @returns {Array} List of appointments for the client.
+   * @returns {Array} List of appointments with doctor names.
    */
   findByClient: async (clientId) => {
-    const sql = "SELECT * FROM appointments WHERE client_id = ?";
+    const sql = `
+      SELECT a.*, 
+             d_user.first_name as doctor_first_name, d_user.last_name as doctor_last_name, d.specialty
+      FROM appointments a
+      JOIN doctors d ON a.doctor_id = d.id
+      JOIN users d_user ON d.user_id = d_user.id
+      WHERE a.client_id = ?
+      ORDER BY a.date DESC
+    `;
     const [rows] = await pool.execute(sql, [clientId]);
     return rows;
   },
@@ -36,10 +63,17 @@ const Appointment = {
   /**
    * Find all appointments for a specific doctor.
    * @param {number} doctorId
-   * @returns {Array} List of appointments for the doctor.
+   * @returns {Array} List of appointments with client names.
    */
   findByDoctor: async (doctorId) => {
-    const sql = "SELECT * FROM appointments WHERE doctor_id = ?";
+    const sql = `
+      SELECT a.*, 
+             c.first_name as client_first_name, c.last_name as client_last_name, c.phone as client_phone
+      FROM appointments a
+      JOIN users c ON a.client_id = c.id
+      WHERE a.doctor_id = ?
+      ORDER BY a.date DESC
+    `;
     const [rows] = await pool.execute(sql, [doctorId]);
     return rows;
   },

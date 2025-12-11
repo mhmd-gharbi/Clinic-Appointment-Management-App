@@ -21,23 +21,111 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Search, Trash2, Edit, Eye, UserPlus } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [gender, setGender] = useState("all")
+  const [ageRange, setAgeRange] = useState("all")
+
+  // distinct genders
+  const genders = Array.from(new Set(patients.map(p => p.gender).filter(g => g && g !== "N/A")))
+
+  const filteredPatients = patients.filter((p) => {
+    const matchesSearch =
+      p.name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.email?.toLowerCase().includes(search.toLowerCase()) ||
+      p.phone?.includes(search)
+
+    const matchesGender = gender === "all" || p.gender === gender
+
+    let matchesAge = true
+    if (ageRange !== "all") {
+      if (p.age === "N/A") {
+        matchesAge = false
+      } else {
+        const ageNum = parseInt(p.age)
+        if (ageRange === "0-17") matchesAge = ageNum <= 17
+        else if (ageRange === "18-64") matchesAge = ageNum >= 18 && ageNum <= 64
+        else if (ageRange === "65+") matchesAge = ageNum >= 65
+      }
+    }
+    return matchesSearch && matchesGender && matchesAge
+  })
 
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const response = await fetch("https://clinic-appointment-management-app.onrender.com/api/patients")
-        if (response.ok) {
-          const data = await response.json()
-          const mappedPatients = data.map((p: any) => ({
-            ...p,
-            name: `${p.first_name} ${p.last_name}`,
-            age: p.date_of_birth ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear() : "N/A",
-          }))
+        const [patientsRes, usersRes] = await Promise.all([
+          fetch("https://clinic-appointment-management-app.onrender.com/api/patients").catch(() => null),
+          fetch("https://clinic-appointment-management-app.onrender.com/api/users").catch(() => null)
+        ])
+
+        if (usersRes && usersRes.ok) {
+          const usersData = await usersRes.json()
+          let patientsData: any[] = []
+
+          // Try to get patients data if available
+          if (patientsRes && patientsRes.ok) {
+            try {
+              patientsData = await patientsRes.json()
+            } catch (e) {
+              console.warn("Failed to parse patients JSON", e)
+            }
+          }
+
+          let mappedPatients: any[] = []
+
+          if (patientsData.length > 0) {
+            // Normal flow: Merge patient data with user data
+            mappedPatients = patientsData.map((p: any) => {
+              const user = usersData.find((u: any) => u.id === p.user_id)
+              const age = p.date_of_birth
+                ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear()
+                : "N/A"
+
+              if (user) {
+                return {
+                  ...p,
+                  ...user,
+                  name: `${user.first_name} ${user.last_name}`,
+                  age,
+                  id: p.id,
+                  user_id: p.user_id
+                }
+              }
+              return {
+                ...p,
+                name: p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || "Unknown",
+                age
+              }
+            })
+          } else {
+            // Fallback flow: Use users with role 'client'
+            console.warn("Using fallback: Fetching clients from users table")
+            mappedPatients = usersData
+              .filter((u: any) => u.role === 'client')
+              .map((u: any) => ({
+                ...u,
+                id: u.id, // Use user ID as patient ID in fallback
+                user_id: u.id,
+                name: `${u.first_name} ${u.last_name}`,
+                age: "N/A",
+                gender: "N/A",
+                medical_history: "N/A"
+              }))
+          }
           setPatients(mappedPatients)
+        } else {
+          console.error("Failed to fetch users (critical)")
         }
       } catch (error) {
         console.error("Error fetching patients:", error)
@@ -57,25 +145,44 @@ export default function PatientsPage() {
     <div className="space-y-6">
       {/* Page Title */}
       <Card>
-        <CardContent className="p-6 space-y-4">
+        <CardContent className="space-y-4">
 
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-4">
             <div className="relative w-60">
-              <Input placeholder="Searching..." className="pl-9" />
+              <Input
+                placeholder="Search name, email..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             </div>
 
-            <Button variant="outline">Filter</Button>
+            <Select value={gender} onValueChange={setGender}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Genders</SelectItem>
+                {genders.map((g: any) => (
+                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <select className="border rounded-md p-2 text-sm">
-              <option>Gender</option>
-            </select>
-
-            <select className="border rounded-md p-2 text-sm">
-              <option>Age Range</option>
-            </select>
+            <Select value={ageRange} onValueChange={setAgeRange}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Age Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Ages</SelectItem>
+                <SelectItem value="0-17">Child (0-17)</SelectItem>
+                <SelectItem value="18-64">Adult (18-64)</SelectItem>
+                <SelectItem value="65+">Senior (65+)</SelectItem>
+              </SelectContent>
+            </Select>
 
             <div className="ml-auto">
               <Button
@@ -110,15 +217,15 @@ export default function PatientsPage() {
                   Loading patients...
                 </TableCell>
               </TableRow>
-            ) : patients.length === 0 ? (
+            ) : filteredPatients.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-10 text-gray-500">
                   No patients found.
                 </TableCell>
               </TableRow>
             ) : (
-              patients.map((p) => (
-                <TableRow key={p.email} className="hover:bg-blue-50/50 transition-colors">
+              filteredPatients.map((p) => (
+                <TableRow key={p.id} className="hover:bg-blue-50/50 transition-colors">
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell>{p.age}</TableCell>
                   <TableCell>

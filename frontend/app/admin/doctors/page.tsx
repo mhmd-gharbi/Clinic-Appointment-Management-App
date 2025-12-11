@@ -21,10 +21,33 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Search, Trash2, Edit, Eye } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function DoctorsPage() {
   const [doctors, setDoctors] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [role, setRole] = useState("all")
+  const [specialty, setSpecialty] = useState("all")
+
+  // distinct roles and specialties for dropdowns
+  const roles = Array.from(new Set(doctors.map(d => d.role).filter(Boolean)))
+  const specialties = Array.from(new Set(doctors.map(d => d.specialty).filter(Boolean)))
+
+  const filteredDoctors = doctors.filter((doc) => {
+    const matchesSearch =
+      doc.name?.toLowerCase().includes(search.toLowerCase()) ||
+      doc.email?.toLowerCase().includes(search.toLowerCase())
+    const matchesRole = role === "all" || doc.role === role
+    const matchesSpecialty = specialty === "all" || doc.specialty === specialty
+    return matchesSearch && matchesRole && matchesSpecialty
+  })
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -79,25 +102,44 @@ export default function DoctorsPage() {
     <div className="space-y-6">
       {/* Page Title */}
       <Card>
-        <CardContent className="p-6 space-y-4">
+        <CardContent className=" space-y-4">
 
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-4">
             <div className="relative w-60">
-              <Input placeholder="Searching..." className="pl-9" />
+              <Input
+                placeholder="Search name or email..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             </div>
 
-            <Button variant="outline">Filter</Button>
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Filter by Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                {roles.map((r: any) => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <select className="border rounded-md p-2 text-sm">
-              <option>Role</option>
-            </select>
-
-            <select className="border rounded-md p-2 text-sm">
-              <option>Specialty</option>
-            </select>
+            <Select value={specialty} onValueChange={setSpecialty}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Filter by Specialty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Specialties</SelectItem>
+                {specialties.map((s: any) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <div className="ml-auto">
               <Button
@@ -132,14 +174,14 @@ export default function DoctorsPage() {
                   Loading doctors...
                 </TableCell>
               </TableRow>
-            ) : doctors.length === 0 ? (
+            ) : filteredDoctors.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-10 text-gray-500">
                   No doctors found.
                 </TableCell>
               </TableRow>
             ) : (
-              doctors.map((doc) => (
+              filteredDoctors.map((doc) => (
                 <TableRow key={doc.id} className="hover:bg-blue-50/50 transition-colors">
                   <TableCell className="font-medium">{doc.name}</TableCell>
                   <TableCell>
