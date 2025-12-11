@@ -22,13 +22,13 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="bg-white border text-gray-500">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 gap-2">
+          <TabsTrigger value="profile" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
             <User className="w-4 h-4" /> Profile
           </TabsTrigger>
-          <TabsTrigger value="security" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 gap-2">
+          <TabsTrigger value="security" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
             <Lock className="w-4 h-4" /> Security
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 gap-2">
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
             <Bell className="w-4 h-4" /> Notifications
           </TabsTrigger>
         </TabsList>
@@ -59,7 +59,7 @@ export default function SettingsPage() {
                 <Input defaultValue="+1234567890" />
               </div>
               <div className="flex justify-end">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">Save Changes</Button>
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Save Changes</Button>
               </div>
             </CardContent>
           </Card>
@@ -85,7 +85,7 @@ export default function SettingsPage() {
                 <Input type="password" />
               </div>
               <div className="flex justify-end">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">Update Password</Button>
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Update Password</Button>
               </div>
             </CardContent>
           </Card>
