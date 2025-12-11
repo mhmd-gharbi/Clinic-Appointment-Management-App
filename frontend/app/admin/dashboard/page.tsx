@@ -39,7 +39,7 @@ export default function DashboardLayout() {
   }, [])
 
   const stats = [
-    { label: "Total Appointments", value: 12, icon: Calendar, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Total Appointments", value: 12, icon: Calendar, color: "text-primary", bg: "bg-primary/10" },
     { label: "Scheduled", value: 32, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
     { label: "Completed", value: 99, icon: CheckCircle, color: "text-green-600", bg: "bg-green-50" },
     { label: "Doctors", value: doctorsCount, icon: UserPlus, color: "text-purple-600", bg: "bg-purple-50" },
