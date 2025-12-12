@@ -95,7 +95,17 @@ const Appointment = {
    * @param {Object} data - Updated fields (date, time, status).
    * @returns {boolean} Success state.
    */
-  update: async (id, { date, time, status }) => {
+  update: async (id, fields) => {
+    // Fetch current appointment to merge fields
+    const sqlGet = "SELECT * FROM appointments WHERE id = ?";
+    const [rows] = await pool.execute(sqlGet, [id]);
+    const current = rows[0];
+    if (!current) return false;
+
+    const date = fields.date || current.date;
+    const time = fields.time || current.time;
+    const status = fields.status || current.status;
+
     const sql = "UPDATE appointments SET date = ?, time = ?, status = ? WHERE id = ?";
     const [result] = await pool.execute(sql, [date, time, status, id]);
     return result.affectedRows > 0;
