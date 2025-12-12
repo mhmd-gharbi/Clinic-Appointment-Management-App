@@ -1,8 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ChevronsUpDown } from "lucide-react"
+import UserProfileDropdown from "@/components/layout/UserProfileDropdown"
 
 export default function AdminTopbar() {
   const pathname = usePathname()
@@ -18,12 +17,8 @@ export default function AdminTopbar() {
           <option>Select Department</option>
         </select>
 
-        <div className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary/10 text-primary">A</AvatarFallback>
-          </Avatar>
-          <span className="text-sm font-medium text-gray-700">Admin</span>
-          <ChevronsUpDown className="w-4 h-4 text-gray-400" />
+        <div className="flex items-center space-x-2">
+          <UserProfileDropdown name="Admin" initial="A" roleLabel="Administrator" />
         </div>
       </div>
     </header>

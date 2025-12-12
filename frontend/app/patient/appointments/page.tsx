@@ -57,8 +57,10 @@ export default function PatientAppointmentsPage() {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        // Hardcoded client ID 51 for demo purposes
-        const res = await fetch("https://clinic-appointment-management-app.onrender.com/api/appointments/client/51")
+        const storedId = localStorage.getItem("userId")
+        const clientId = storedId || "51" // Fallback to 51 if not logged in via landing page
+
+        const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/appointments/client/${clientId}`)
         if (res.ok) {
           const data = await res.json()
           const mapped = data.map((appt: any) => ({

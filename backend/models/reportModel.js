@@ -24,10 +24,18 @@ const Report = {
   /**
    * Find all reports for a client.
    * @param {number} clientId
-   * @returns {Array} List of reports.
+   * @returns {Array} List of reports with doctor names.
    */
   findByClient: async (clientId) => {
-    const sql = "SELECT * FROM reports WHERE client_id = ?";
+    const sql = `
+      SELECT r.*, 
+             d_user.first_name as doctor_first_name, d_user.last_name as doctor_last_name, d.specialty
+      FROM reports r
+      JOIN doctors d ON r.doctor_id = d.id
+      JOIN users d_user ON d.user_id = d_user.id
+      WHERE r.client_id = ?
+      ORDER BY r.issued_at DESC
+    `;
     const [rows] = await pool.execute(sql, [clientId]);
     return rows;
   },
@@ -35,10 +43,17 @@ const Report = {
   /**
    * Find all reports created by a doctor.
    * @param {number} doctorId
-   * @returns {Array} List of reports.
+   * @returns {Array} List of reports with client names.
    */
   findByDoctor: async (doctorId) => {
-    const sql = "SELECT * FROM reports WHERE doctor_id = ?";
+    const sql = `
+      SELECT r.*, 
+             c.first_name as client_first_name, c.last_name as client_last_name
+      FROM reports r
+      JOIN users c ON r.client_id = c.id
+      WHERE r.doctor_id = ?
+      ORDER BY r.issued_at DESC
+    `;
     const [rows] = await pool.execute(sql, [doctorId]);
     return rows;
   },

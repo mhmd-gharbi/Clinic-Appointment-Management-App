@@ -40,8 +40,10 @@ export default function DoctorAppointmentsPage() {
     useEffect(() => {
         const fetchAppointments = async () => {
             try {
-                // Hardcoded Doctor ID 1 for demo purposes
-                const res = await fetch("https://clinic-appointment-management-app.onrender.com/api/appointments/doctor/1")
+                const storedId = localStorage.getItem("userId")
+                const doctorId = storedId || "1" // Fallback to 1
+
+                const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/appointments/doctor/${doctorId}`)
                 if (res.ok) {
                     const data = await res.json()
                     const mapped = data.map((appt: any) => ({

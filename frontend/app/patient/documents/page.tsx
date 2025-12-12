@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,34 +23,72 @@ import {
 export default function PatientDocumentsPage() {
   const [selectedDoc, setSelectedDoc] = useState<any>(null)
 
-  const documents = [
-    {
-      id: 1,
-      name: "Blood Test Report",
-      type: "Lab Report",
-      issued: "2025-12-22",
-      content: "This is a sample blood test report content...",
-    },
-    {
-      id: 2,
-      name: "Prescription — Dr. Sarah",
-      type: "Prescription",
-      issued: "2025-12-18",
-      content: "Prescription details go here...",
-    },
-    {
-      id: 3,
-      name: "X-Ray Report",
-      type: "Imaging",
-      issued: "2025-12-10",
-      content: "X-ray report content placeholder...",
-    },
-  ]
+  const [documents, setDocuments] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const [reportsRes, prescriptionsRes, referralsRes] = await Promise.all([
+          fetch("https://clinic-appointment-management-app.onrender.com/api/reports/client/51").catch(() => null),
+          fetch("https://clinic-appointment-management-app.onrender.com/api/prescriptions/client/51").catch(() => null),
+          fetch("https://clinic-appointment-management-app.onrender.com/api/referrals/client/51").catch(() => null)
+        ])
+
+        let docs: any[] = []
+
+        // Process Reports
+        if (reportsRes && reportsRes.ok) {
+          const reports = await reportsRes.json()
+          docs = docs.concat(reports.map((r: any) => ({
+            id: `rep-${r.id}`,
+            name: `Report: ${r.type}`,
+            type: "Lab Report", // or map based on r.type
+            issued: new Date(r.issued_at).toLocaleDateString(),
+            content: r.results,
+            details: `Doctor: Dr. ${r.doctor_first_name} ${r.doctor_last_name}`
+          })))
+        }
+
+        // Process Prescriptions
+        if (prescriptionsRes && prescriptionsRes.ok) {
+          const prescriptions = await prescriptionsRes.json()
+          docs = docs.concat(prescriptions.map((p: any) => ({
+            id: `pre-${p.id}`,
+            name: `Prescription from Dr. ${p.doctor_last_name}`,
+            type: "Prescription",
+            issued: new Date(p.issued_at).toLocaleDateString(),
+            content: `Medicines: ${p.medicines}\nInstructions: ${p.instructions}`,
+            details: `Doctor: Dr. ${p.doctor_first_name} ${p.doctor_last_name}`
+          })))
+        }
+
+        // Process Referrals
+        if (referralsRes && referralsRes.ok) {
+          const referrals = await referralsRes.json()
+          docs = docs.concat(referrals.map((ref: any) => ({
+            id: `ref-${ref.id}`,
+            name: `Referral to Dr. ${ref.to_doctor_last_name}`,
+            type: "Referral",
+            issued: new Date(ref.created_at).toLocaleDateString(),
+            content: `Reason: ${ref.reason}`,
+            details: `From Dr. ${ref.from_doctor_first_name} ${ref.from_doctor_last_name} to Dr. ${ref.to_doctor_first_name} ${ref.to_doctor_last_name}`
+          })))
+        }
+
+        setDocuments(docs)
+
+      } catch (error) {
+        console.error("Error fetching documents:", error)
+      }
+    }
+    fetchDocuments()
+  }, [])
 
   const typeColors: Record<string, string> = {
     "Lab Report": "bg-green-100 text-green-800",
-    Prescription: "bg-blue-100 text-blue-800",
-    Imaging: "bg-purple-100 text-purple-800",
+    "Prescription": "bg-blue-100 text-blue-800",
+    "Referral": "bg-purple-100 text-purple-800",
+    "Imaging": "bg-indigo-100 text-indigo-800",
   }
 
   return (

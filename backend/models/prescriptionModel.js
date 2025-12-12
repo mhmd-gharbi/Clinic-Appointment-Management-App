@@ -25,10 +25,18 @@ const Prescription = {
   /**
    * Find all prescriptions for a client.
    * @param {number} clientId
-   * @returns {Array} List of prescriptions.
+   * @returns {Array} List of prescriptions with doctor names.
    */
   findByClient: async (clientId) => {
-    const sql = "SELECT * FROM prescriptions WHERE client_id = ?";
+    const sql = `
+      SELECT p.*, 
+             d_user.first_name as doctor_first_name, d_user.last_name as doctor_last_name, d.specialty
+      FROM prescriptions p
+      JOIN doctors d ON p.doctor_id = d.id
+      JOIN users d_user ON d.user_id = d_user.id
+      WHERE p.client_id = ?
+      ORDER BY p.issued_at DESC
+    `;
     const [rows] = await pool.execute(sql, [clientId]);
     return rows;
   },
@@ -36,10 +44,17 @@ const Prescription = {
   /**
    * Find all prescriptions by a doctor.
    * @param {number} doctorId
-   * @returns {Array} List of prescriptions.
+   * @returns {Array} List of prescriptions with client names.
    */
   findByDoctor: async (doctorId) => {
-    const sql = "SELECT * FROM prescriptions WHERE doctor_id = ?";
+    const sql = `
+      SELECT p.*, 
+             c.first_name as client_first_name, c.last_name as client_last_name
+      FROM prescriptions p
+      JOIN users c ON p.client_id = c.id
+      WHERE p.doctor_id = ?
+      ORDER BY p.issued_at DESC
+    `;
     const [rows] = await pool.execute(sql, [doctorId]);
     return rows;
   },

@@ -36,10 +36,21 @@ const Referral = {
   /**
    * Retrieve all referrals for a specific client (patient).
    * @param {number} clientId
-   * @returns {Array} List of referrals for this client.
+   * @returns {Array} List of referrals with doctor names.
    */
   findByClient: async (clientId) => {
-    const sql = "SELECT * FROM referrals WHERE client_id = ?";
+    const sql = `
+      SELECT r.*, 
+             fd_user.first_name as from_doctor_first_name, fd_user.last_name as from_doctor_last_name,
+             td_user.first_name as to_doctor_first_name, td_user.last_name as to_doctor_last_name
+      FROM referrals r
+      JOIN doctors fd ON r.from_doctor_id = fd.id
+      JOIN users fd_user ON fd.user_id = fd_user.id
+      JOIN doctors td ON r.to_doctor_id = td.id
+      JOIN users td_user ON td.user_id = td_user.id
+      WHERE r.client_id = ?
+      ORDER BY r.created_at DESC
+    `;
     const [rows] = await pool.execute(sql, [clientId]);
     return rows;
   },
@@ -47,10 +58,20 @@ const Referral = {
   /**
    * Retrieve all referrals sent by a specific doctor.
    * @param {number} fromDoctorId
-   * @returns {Array} List of referrals initiated by this doctor.
+   * @returns {Array} List of referrals with client and target doctor names.
    */
   findByFromDoctor: async (fromDoctorId) => {
-    const sql = "SELECT * FROM referrals WHERE from_doctor_id = ?";
+    const sql = `
+      SELECT r.*, 
+             c.first_name as client_first_name, c.last_name as client_last_name,
+             td_user.first_name as to_doctor_first_name, td_user.last_name as to_doctor_last_name
+      FROM referrals r
+      JOIN users c ON r.client_id = c.id
+      JOIN doctors td ON r.to_doctor_id = td.id
+      JOIN users td_user ON td.user_id = td_user.id
+      WHERE r.from_doctor_id = ?
+      ORDER BY r.created_at DESC
+    `;
     const [rows] = await pool.execute(sql, [fromDoctorId]);
     return rows;
   },
@@ -58,10 +79,20 @@ const Referral = {
   /**
    * Retrieve all referrals received by a specific doctor.
    * @param {number} toDoctorId
-   * @returns {Array} List of referrals addressed to this doctor.
+   * @returns {Array} List of referrals with client and source doctor names.
    */
   findByToDoctor: async (toDoctorId) => {
-    const sql = "SELECT * FROM referrals WHERE to_doctor_id = ?";
+    const sql = `
+      SELECT r.*, 
+             c.first_name as client_first_name, c.last_name as client_last_name,
+             fd_user.first_name as from_doctor_first_name, fd_user.last_name as from_doctor_last_name
+      FROM referrals r
+      JOIN users c ON r.client_id = c.id
+      JOIN doctors fd ON r.from_doctor_id = fd.id
+      JOIN users fd_user ON fd.user_id = fd_user.id
+      WHERE r.to_doctor_id = ?
+      ORDER BY r.created_at DESC
+    `;
     const [rows] = await pool.execute(sql, [toDoctorId]);
     return rows;
   },
@@ -126,4 +157,4 @@ const Referral = {
   },
 };
 
-module.exports = Referral;
+module.exports = Referral;
