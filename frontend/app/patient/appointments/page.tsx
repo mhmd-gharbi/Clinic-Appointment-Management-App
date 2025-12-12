@@ -35,6 +35,82 @@ export default function PatientAppointmentsPage() {
   const [bookModalOpen, setBookModalOpen] = useState(false)
   const [doctorsList, setDoctorsList] = useState([])
 
+  const [newDoctorId, setNewDoctorId] = useState("")
+  const [newDate, setNewDate] = useState("")
+  const [newTime, setNewTime] = useState("")
+  const [newType, setNewType] = useState("normal")
+
+  const fetchAppointments = async () => {
+    try {
+      const storedId = localStorage.getItem("userId")
+      const userId = storedId || "52"
+
+      const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/appointments/client/${userId}`)
+      if (res.ok) {
+        const data = await res.json()
+        const mapped = data.map((appt: any) => ({
+          id: appt.id,
+          doctor: `Dr. ${appt.doctor_first_name} ${appt.doctor_last_name}`,
+          date: new Date(appt.date).toLocaleDateString(),
+          time: appt.time,
+          status: appt.status || 'scheduled',
+          notes: appt.type
+        }))
+        setAppointments(mapped)
+      }
+    } catch (error) {
+      console.error("Error fetching appointments:", error)
+    }
+  }
+
+  const handleBookAppointment = async () => {
+    const storedId = localStorage.getItem("userId")
+    const userId = (storedId && storedId !== "51") ? storedId : "52"
+
+    if (!newDoctorId || !newDate || !newTime) {
+      alert("Please fill in all fields")
+      return
+    }
+
+    try {
+      console.log("Booking appointment for Client ID:", userId);
+      const res = await fetch("https://clinic-appointment-management-app.onrender.com/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: userId,
+          doctorId: newDoctorId,
+          date: newDate,
+          time: newTime,
+          status: "scheduled",
+          type: newType
+        })
+      })
+
+      if (res.ok) {
+        alert("Appointment booked successfully!")
+        setBookModalOpen(false)
+        setNewDoctorId("")
+        setNewDate("")
+        setNewTime("")
+        setNewType("normal")
+        fetchAppointments()
+      } else {
+        const errorData = await res.json()
+        const errorMessage = errorData.error || "Unknown error";
+        alert(`Failed to book appointment: ${errorMessage} (Client ID: ${userId})`)
+
+        // If it's a constraint error, it might be the user ID
+        if (errorMessage.includes("constraint")) {
+          console.error("Constraint error likely due to invalid User ID.");
+        }
+      }
+    } catch (error) {
+      console.error("Error booking appointment:", error)
+      alert("Error booking appointment")
+    }
+  }
+
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
@@ -55,28 +131,6 @@ export default function PatientAppointmentsPage() {
   const [appointments, setAppointments] = useState<any[]>([])
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const storedId = localStorage.getItem("userId")
-        const clientId = storedId || "51" // Fallback to 51 if not logged in via landing page
-
-        const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/appointments/client/${clientId}`)
-        if (res.ok) {
-          const data = await res.json()
-          const mapped = data.map((appt: any) => ({
-            id: appt.id,
-            doctor: `Dr. ${appt.doctor_first_name} ${appt.doctor_last_name}`,
-            date: new Date(appt.date).toLocaleDateString(),
-            time: appt.time,
-            status: appt.status || 'scheduled',
-            notes: appt.type // using type as notes/category for now
-          }))
-          setAppointments(mapped)
-        }
-      } catch (error) {
-        console.error("Error fetching appointments:", error)
-      }
-    }
     fetchAppointments()
   }, [])
 
@@ -110,39 +164,35 @@ export default function PatientAppointmentsPage() {
               </DialogHeader>
 
               <div className="mt-4 space-y-4">
-                {/* Doctor selection */}
                 <div className="space-y-2">
                   <Label>Doctor</Label>
-                  <Select>
+                  <Select value={newDoctorId} onValueChange={setNewDoctorId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choose doctor" />
                     </SelectTrigger>
                     <SelectContent>
                       {doctorsList.map((doctor: any) => (
-                        <SelectItem key={doctor._id || doctor.id || doctor.email} value={doctor.name}>
-                          {doctor.name}
+                        <SelectItem key={doctor.id} value={String(doctor.id)}>
+                          {doctor.first_name ? `Dr. ${doctor.first_name} ${doctor.last_name}` : doctor.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Appointment date */}
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input type="date" />
+                  <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
                 </div>
 
-                {/* Appointment time */}
                 <div className="space-y-2">
                   <Label>Time</Label>
-                  <Input type="time" />
+                  <Input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} />
                 </div>
 
-                {/* Appointment type */}
                 <div className="space-y-2">
                   <Label>Type</Label>
-                  <RadioGroup className="flex flex-row gap-4">
+                  <RadioGroup className="flex flex-row gap-4" value={newType} onValueChange={setNewType}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="normal" id="normal" />
                       <Label htmlFor="normal">Normal</Label>
@@ -161,7 +211,7 @@ export default function PatientAppointmentsPage() {
                   >
                     Cancel
                   </Button>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleBookAppointment}>
                     Book
                   </Button>
                 </div>

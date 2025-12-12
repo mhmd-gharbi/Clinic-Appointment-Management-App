@@ -36,7 +36,12 @@ export default function DoctorsPage() {
   const [role, setRole] = useState("all")
   const [specialty, setSpecialty] = useState("all")
 
-  // distinct roles and specialties for dropdowns
+  const [newFirstName, setNewFirstName] = useState("")
+  const [newLastName, setNewLastName] = useState("")
+  const [newEmail, setNewEmail] = useState("")
+  const [newPhone, setNewPhone] = useState("")
+  const [newSpecialty, setNewSpecialty] = useState("")
+
   const roles = Array.from(new Set(doctors.map(d => d.role).filter(Boolean)))
   const specialties = Array.from(new Set(doctors.map(d => d.specialty).filter(Boolean)))
 
@@ -49,47 +54,48 @@ export default function DoctorsPage() {
     return matchesSearch && matchesRole && matchesSpecialty
   })
 
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        const [doctorsRes, usersRes] = await Promise.all([
-          fetch("https://clinic-appointment-management-app.onrender.com/api/doctors"),
-          fetch("https://clinic-appointment-management-app.onrender.com/api/users")
-        ])
+  const fetchDoctors = async () => {
+    setLoading(true)
+    try {
+      const [doctorsRes, usersRes] = await Promise.all([
+        fetch("https://clinic-appointment-management-app.onrender.com/api/doctors"),
+        fetch("https://clinic-appointment-management-app.onrender.com/api/users")
+      ])
 
-        if (doctorsRes.ok && usersRes.ok) {
-          const doctorsData = await doctorsRes.json()
-          const usersData = await usersRes.json()
+      if (doctorsRes.ok && usersRes.ok) {
+        const doctorsData = await doctorsRes.json()
+        const usersData = await usersRes.json()
 
-          const mappedDoctors = doctorsData.map((d: any) => {
-            const user = usersData.find((u: any) => u.id === d.user_id)
-            if (user) {
-              return {
-                ...d,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                email: user.email,
-                phone: user.phone,
-                role: user.role,
-                name: `${user.first_name} ${user.last_name}`
-              }
-            }
+        const mappedDoctors = doctorsData.map((d: any) => {
+          const user = usersData.find((u: any) => u.id === d.user_id)
+          if (user) {
             return {
               ...d,
-              name: d.name || `${d.first_name || ''} ${d.last_name || ''}`.trim() || "Unknown"
+              first_name: user.first_name,
+              last_name: user.last_name,
+              email: user.email,
+              phone: user.phone,
+              role: user.role,
+              name: `${user.first_name} ${user.last_name}`
             }
-          })
-          setDoctors(mappedDoctors)
-        } else {
-          console.error("Failed to fetch doctors or users")
-        }
-      } catch (error) {
-        console.error("Error fetching doctors:", error)
-      } finally {
-        setLoading(false)
+          }
+          return {
+            ...d,
+            name: d.name || `${d.first_name || ''} ${d.last_name || ''}`.trim() || `${d.first_name || ''} ${d.last_name || ''}`.trim() || "Unknown"
+          }
+        })
+        setDoctors(mappedDoctors)
+      } else {
+        console.error("Failed to fetch doctors or users")
       }
+    } catch (error) {
+      console.error("Error fetching doctors:", error)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchDoctors()
   }, [])
 
@@ -97,6 +103,113 @@ export default function DoctorsPage() {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null)
+
+  const handleAddDoctor = async () => {
+    if (!newFirstName || !newLastName || !newEmail || !newSpecialty) {
+      alert("Please fill in Name, Email and Specialty")
+      return
+    }
+
+    try {
+      const userRes = await fetch("https://clinic-appointment-management-app.onrender.com/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: newFirstName,
+          lastName: newLastName,
+          email: newEmail,
+          phone: newPhone || null,
+          role: "doctor",
+          password: "password123",
+        }),
+      })
+
+      if (!userRes.ok) {
+        const errData = await userRes.json().catch(() => ({}))
+        throw new Error(errData.error || errData.message || "Failed to create user")
+      }
+
+      const userData = await userRes.json()
+      const userId = userData.id || userData._id
+
+      if (userId) {
+        await fetch("https://clinic-appointment-management-app.onrender.com/api/doctors", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: userId,
+            specialty: newSpecialty
+          })
+        })
+      }
+
+      setAddModalOpen(false)
+      fetchDoctors()
+
+      setNewFirstName("")
+      setNewLastName("")
+      setNewEmail("")
+      setNewPhone("")
+      setNewSpecialty("")
+      alert("Doctor added successfully!")
+
+    } catch (err: any) {
+      console.error("Error adding doctor:", err)
+      alert(`Error adding doctor: ${err.message}`)
+    }
+  }
+
+  const handleDeleteDoctor = async (doctor: any) => {
+    if (confirm(`Are you sure you want to delete ${doctor.name}?`)) {
+      try {
+        const userId = doctor.user_id;
+
+        await fetch(`https://clinic-appointment-management-app.onrender.com/api/doctors/${doctor.id}`, { method: 'DELETE' });
+
+        if (userId) {
+          await fetch(`https://clinic-appointment-management-app.onrender.com/api/users/${userId}`, { method: 'DELETE' });
+        }
+
+        alert("Doctor deleted successfully")
+        fetchDoctors()
+      } catch (err) {
+        console.error("Error deleting doctor:", err);
+        alert("Failed to delete doctor");
+      }
+    }
+  }
+
+  const handleEditDoctor = async () => {
+    if (!selectedDoctor) return;
+    try {
+      await fetch(`https://clinic-appointment-management-app.onrender.com/api/users/${selectedDoctor.user_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: selectedDoctor.first_name,
+          lastName: selectedDoctor.last_name,
+          email: selectedDoctor.email,
+          phone: selectedDoctor.phone,
+          role: selectedDoctor.role
+        })
+      });
+
+      await fetch(`https://clinic-appointment-management-app.onrender.com/api/doctors/${selectedDoctor.id}/specialty`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          specialty: selectedDoctor.specialty
+        })
+      });
+
+      setEditModalOpen(false);
+      fetchDoctors();
+      alert("Doctor updated successfully");
+    } catch (err) {
+      console.error("Error updating doctor:", err)
+      alert("Failed to update doctor")
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -207,7 +320,7 @@ export default function DoctorsPage() {
                       }}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100" onClick={() => handleDeleteDoctor(doc)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -258,31 +371,59 @@ export default function DoctorsPage() {
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-2">
-              <Label>Name</Label>
-              <Input defaultValue={selectedDoctor?.name} />
+              <Label>First Name</Label>
+              <Input
+                value={selectedDoctor?.first_name || ''}
+                onChange={(e) => setSelectedDoctor({ ...selectedDoctor, first_name: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
-              <Label>Role</Label>
-              <Input defaultValue={selectedDoctor?.role} />
+              <Label>Last Name</Label>
+              <Input
+                value={selectedDoctor?.last_name || ''}
+                onChange={(e) => setSelectedDoctor({ ...selectedDoctor, last_name: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label>Specialty</Label>
-              <Input defaultValue={selectedDoctor?.specialty} />
+              <Select
+                value={selectedDoctor?.specialty || ''}
+                onValueChange={(val) => setSelectedDoctor({ ...selectedDoctor, specialty: val })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Specialty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
+                  <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                  <SelectItem value="Dermatology">Dermatology</SelectItem>
+                  <SelectItem value="Cardiology">Cardiology</SelectItem>
+                  <SelectItem value="Neurology">Neurology</SelectItem>
+                  <SelectItem value="Orthopedics">Orthopedics</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Phone</Label>
-              <Input defaultValue={selectedDoctor?.phone} />
+              <Input
+                value={selectedDoctor?.phone || ''}
+                onChange={(e) => setSelectedDoctor({ ...selectedDoctor, phone: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input defaultValue={selectedDoctor?.email} />
+              <Input
+                value={selectedDoctor?.email || ''}
+                onChange={(e) => setSelectedDoctor({ ...selectedDoctor, email: e.target.value })}
+              />
             </div>
           </div>
           <DialogFooter className="mt-4 flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setEditModalOpen(false)}>
               Cancel
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">Save</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleEditDoctor}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -294,32 +435,48 @@ export default function DoctorsPage() {
             <DialogTitle>Add Doctor</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input placeholder="Name" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>First Name</Label>
+                <Input placeholder="Jane" value={newFirstName} onChange={e => setNewFirstName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Last Name</Label>
+                <Input placeholder="Smith" value={newLastName} onChange={e => setNewLastName(e.target.value)} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Input placeholder="Role" />
-            </div>
+
             <div className="space-y-2">
               <Label>Specialty</Label>
-              <Input placeholder="Specialty" />
+              <Select value={newSpecialty} onValueChange={setNewSpecialty}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Specialty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
+                  <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                  <SelectItem value="Dermatology">Dermatology</SelectItem>
+                  <SelectItem value="Cardiology">Cardiology</SelectItem>
+                  <SelectItem value="Neurology">Neurology</SelectItem>
+                  <SelectItem value="Orthopedics">Orthopedics</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Phone</Label>
-              <Input placeholder="Phone" />
+              <Input placeholder="Phone" value={newPhone} onChange={e => setNewPhone(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input placeholder="Email" />
+              <Input placeholder="Email" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
             </div>
           </div>
           <DialogFooter className="mt-4 flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setAddModalOpen(false)}>
               Cancel
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">Add</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleAddDoctor}>Add</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -36,6 +36,14 @@ export default function PatientsPage() {
   const [gender, setGender] = useState("all")
   const [ageRange, setAgeRange] = useState("all")
 
+  // New Patient State
+  const [newFirstName, setNewFirstName] = useState("")
+  const [newLastName, setNewLastName] = useState("")
+  const [newEmail, setNewEmail] = useState("")
+  const [newPhone, setNewPhone] = useState("")
+  const [newAge, setNewAge] = useState("")
+  const [newGender, setNewGender] = useState("")
+
   // distinct genders
   const genders = Array.from(new Set(patients.map(p => p.gender).filter(g => g && g !== "N/A")))
 
@@ -61,78 +69,81 @@ export default function PatientsPage() {
     return matchesSearch && matchesGender && matchesAge
   })
 
-  useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const [patientsRes, usersRes] = await Promise.all([
-          fetch("https://clinic-appointment-management-app.onrender.com/api/patients").catch(() => null),
-          fetch("https://clinic-appointment-management-app.onrender.com/api/users").catch(() => null)
-        ])
+  const fetchPatients = async () => {
+    setLoading(true)
+    try {
+      const [patientsRes, usersRes] = await Promise.all([
+        fetch("https://clinic-appointment-management-app.onrender.com/api/patients").catch(() => null),
+        fetch("https://clinic-appointment-management-app.onrender.com/api/users").catch(() => null)
+      ])
 
-        if (usersRes && usersRes.ok) {
-          const usersData = await usersRes.json()
-          let patientsData: any[] = []
+      if (usersRes && usersRes.ok) {
+        const usersData = await usersRes.json()
+        let patientsData: any[] = []
 
-          // Try to get patients data if available
-          if (patientsRes && patientsRes.ok) {
-            try {
-              patientsData = await patientsRes.json()
-            } catch (e) {
-              console.warn("Failed to parse patients JSON", e)
-            }
+        // Try to get patients data if available
+        if (patientsRes && patientsRes.ok) {
+          try {
+            patientsData = await patientsRes.json()
+          } catch (e) {
+            console.warn("Failed to parse patients JSON", e)
           }
+        }
 
-          let mappedPatients: any[] = []
+        let mappedPatients: any[] = []
 
-          if (patientsData.length > 0) {
-            // Normal flow: Merge patient data with user data
-            mappedPatients = patientsData.map((p: any) => {
-              const user = usersData.find((u: any) => u.id === p.user_id)
-              const age = p.date_of_birth
-                ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear()
-                : "N/A"
+        if (patientsData.length > 0) {
+          // Normal flow: Merge patient data with user data
+          mappedPatients = patientsData.map((p: any) => {
+            const user = usersData.find((u: any) => u.id === p.user_id)
+            const age = p.date_of_birth
+              ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear()
+              : "N/A"
 
-              if (user) {
-                return {
-                  ...p,
-                  ...user,
-                  name: `${user.first_name} ${user.last_name}`,
-                  age,
-                  id: p.id,
-                  user_id: p.user_id
-                }
-              }
+            if (user) {
               return {
                 ...p,
-                name: p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || "Unknown",
-                age
+                ...user,
+                name: `${user.first_name} ${user.last_name}`,
+                age,
+                id: p.id,
+                user_id: p.user_id
               }
-            })
-          } else {
-            // Fallback flow: Use users with role 'client'
-            console.warn("Using fallback: Fetching clients from users table")
-            mappedPatients = usersData
-              .filter((u: any) => u.role === 'client')
-              .map((u: any) => ({
-                ...u,
-                id: u.id, // Use user ID as patient ID in fallback
-                user_id: u.id,
-                name: `${u.first_name} ${u.last_name}`,
-                age: "N/A",
-                gender: "N/A",
-                medical_history: "N/A"
-              }))
-          }
-          setPatients(mappedPatients)
+            }
+            return {
+              ...p,
+              name: p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || "Unknown",
+              age
+            }
+          })
         } else {
-          console.error("Failed to fetch users (critical)")
+          // Fallback flow: Use users with role 'client'
+          console.warn("Using fallback: Fetching clients from users table")
+          mappedPatients = usersData
+            .filter((u: any) => u.role === 'client')
+            .map((u: any) => ({
+              ...u,
+              id: u.id, // Use user ID as patient ID in fallback
+              user_id: u.id,
+              name: `${u.first_name} ${u.last_name}`,
+              age: "N/A",
+              gender: "N/A",
+              medical_history: "N/A"
+            }))
         }
-      } catch (error) {
-        console.error("Error fetching patients:", error)
-      } finally {
-        setLoading(false)
+        setPatients(mappedPatients)
+      } else {
+        console.error("Failed to fetch users (critical)")
       }
+    } catch (error) {
+      console.error("Error fetching patients:", error)
+    } finally {
+      setLoading(false)
     }
+  }
+
+
+  useEffect(() => {
     fetchPatients()
   }, [])
 
@@ -140,6 +151,76 @@ export default function PatientsPage() {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<any>(null)
+
+  const handleAddPatient = async () => {
+    if (!newFirstName || !newLastName || !newEmail) {
+      alert("Please fill in at least Name and Email")
+      return
+    }
+
+    try {
+      // 1. Create User
+      const userRes = await fetch("https://clinic-appointment-management-app.onrender.com/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: newFirstName,
+          lastName: newLastName,
+          email: newEmail,
+          phone: newPhone,
+          role: "client",
+          password: "password123",
+        }),
+      })
+
+      if (!userRes.ok) {
+        const errData = await userRes.json().catch(() => ({}))
+        console.error("User creation failed", errData)
+        throw new Error(errData.message || "Failed to create user")
+      }
+
+      const userData = await userRes.json()
+      const userId = userData.id || userData._id
+
+      // 2. Create Patient Details
+      if (userId) {
+        let dob = null
+        if (newAge) {
+          const birthYear = new Date().getFullYear() - parseInt(newAge)
+          dob = `${birthYear}-01-01`
+        }
+
+        await fetch("https://clinic-appointment-management-app.onrender.com/api/patients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: userId,
+            dateOfBirth: dob,
+            gender: newGender,
+            address: null,
+            medicalHistory: "None"
+          })
+        })
+      }
+
+      setAddModalOpen(false)
+      // Reset form
+      setNewFirstName("")
+      setNewLastName("")
+      setNewEmail("")
+      setNewPhone("")
+      setNewAge("")
+      setNewGender("")
+
+      // Refresh list
+      fetchPatients()
+      alert("Patient added successfully!")
+
+    } catch (err: any) {
+      console.error("Error adding patient:", err)
+      alert(`Error adding patient: ${err.message}`)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -263,7 +344,7 @@ export default function PatientsPage() {
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100" onClick={async () => {
                         if (confirm('Are you sure you want to delete this patient?')) {
                           try {
-                            const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/patients/${p.id}`, { method: 'DELETE' });
+                            const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/users/${p.id}`, { method: 'DELETE' });
                             if (res.ok) {
                               setPatients(patients.filter(patient => patient.id !== p.id));
                             }
@@ -358,32 +439,48 @@ export default function PatientsPage() {
             <DialogTitle>Add Patient</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input placeholder="Name" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>First Name</Label>
+                <Input placeholder="John" value={newFirstName} onChange={(e) => setNewFirstName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Last Name</Label>
+                <Input placeholder="Doe" value={newLastName} onChange={(e) => setNewLastName(e.target.value)} />
+              </div>
             </div>
+
             <div className="space-y-2">
               <Label>Age</Label>
-              <Input placeholder="Age" type="number" />
+              <Input placeholder="Age" type="number" value={newAge} onChange={(e) => setNewAge(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Gender</Label>
-              <Input placeholder="Gender" />
+              <Select value={newGender} onValueChange={setNewGender}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Phone</Label>
-              <Input placeholder="Phone" />
+              <Input placeholder="Phone" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input placeholder="Email" />
+              <Input placeholder="Email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
             </div>
           </div>
           <DialogFooter className="mt-4 flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setAddModalOpen(false)}>
               Cancel
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">Add</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleAddPatient}>Add</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

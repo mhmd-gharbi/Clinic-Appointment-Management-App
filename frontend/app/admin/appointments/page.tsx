@@ -225,7 +225,7 @@ export default function AppointmentsPage() {
         setAppointments(mapped);
         setAddModalOpen(false);
         // reset fields
-        setNewPatient("");
+        setNewPatientId("");
         setNewDoctorId("");
         setNewDate("");
         setNewTime("");

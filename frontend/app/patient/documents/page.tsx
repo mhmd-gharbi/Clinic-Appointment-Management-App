@@ -28,10 +28,13 @@ export default function PatientDocumentsPage() {
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
+        const storedId = localStorage.getItem("userId")
+        const clientId = (storedId && storedId !== "51") ? storedId : "52"
+
         const [reportsRes, prescriptionsRes, referralsRes] = await Promise.all([
-          fetch("https://clinic-appointment-management-app.onrender.com/api/reports/client/51").catch(() => null),
-          fetch("https://clinic-appointment-management-app.onrender.com/api/prescriptions/client/51").catch(() => null),
-          fetch("https://clinic-appointment-management-app.onrender.com/api/referrals/client/51").catch(() => null)
+          fetch(`https://clinic-appointment-management-app.onrender.com/api/reports/client/${clientId}`).catch(() => null),
+          fetch(`https://clinic-appointment-management-app.onrender.com/api/prescriptions/client/${clientId}`).catch(() => null),
+          fetch(`https://clinic-appointment-management-app.onrender.com/api/referrals/client/${clientId}`).catch(() => null)
         ])
 
         let docs: any[] = []

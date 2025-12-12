@@ -19,7 +19,7 @@ export default function LandingPage() {
       router.push("/admin/dashboard")
     } else if (role === "doctor") {
       localStorage.setItem("userRole", "doctor")
-      localStorage.setItem("userId", "1") // Doctor ID
+      localStorage.setItem("userId", "10") // Doctor ID
       router.push("/doctor/dashboard")
     } else if (role === "patient") {
       localStorage.setItem("userRole", "client") // "client" is the role in DB
