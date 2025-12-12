@@ -37,11 +37,46 @@ export default function DoctorAppointmentsPage() {
         urgent: "bg-orange-500"
     }
 
+    const handleStatusUpdate = async (id: number, newStatus: string) => {
+        try {
+            const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/appointments/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (res.ok) {
+                alert(`Appointment marked as ${newStatus}`);
+                // Refresh list
+                const storedId = localStorage.getItem("userId") || "10"
+                const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/appointments/doctor/${storedId}`)
+                if (res.ok) {
+                    const data = await res.json()
+                    const mapped = data.map((appt: any) => ({
+                        id: appt.id,
+                        patient: `${appt.client_first_name} ${appt.client_last_name}`,
+                        phone: appt.client_phone,
+                        date: new Date(appt.date).toLocaleDateString(),
+                        time: appt.time,
+                        status: appt.status || 'scheduled',
+                        type: appt.type
+                    }))
+                    setAppointments(mapped)
+                }
+            } else {
+                alert("Failed to update status");
+            }
+        } catch (error) {
+            console.error("Error updating status:", error);
+            alert("Error updating status");
+        }
+    }
+
     useEffect(() => {
         const fetchAppointments = async () => {
             try {
                 const storedId = localStorage.getItem("userId")
-                const doctorId = storedId || "1" // Fallback to 1
+                const doctorId = storedId || "10" // Fallback to 10
 
                 const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/appointments/doctor/${doctorId}`)
                 if (res.ok) {
@@ -125,10 +160,29 @@ export default function DoctorAppointmentsPage() {
                                             </Badge>
                                         </TableCell>
 
-                                        <TableCell className="text-right">
+                                        <TableCell className="text-right space-x-2">
+                                            {appt.status === 'scheduled' && (
+                                                <>
+                                                    <Button
+                                                        size="sm"
+                                                        className="bg-green-600 hover:bg-green-700 h-8"
+                                                        onClick={() => handleStatusUpdate(appt.id, 'completed')}
+                                                    >
+                                                        Complete
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        className="h-8"
+                                                        onClick={() => handleStatusUpdate(appt.id, 'cancelled')}
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                </>
+                                            )}
                                             <Button
                                                 variant="ghost"
-                                                size="icon"
+                                                size="sm"
                                                 className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
                                                 onClick={() => {
                                                     setSelectedAppt(appt)

@@ -342,14 +342,18 @@ export default function PatientsPage() {
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100" onClick={async () => {
-                        if (confirm('Are you sure you want to delete this patient?')) {
+                        if (confirm(`Are you sure you want to delete ${p.name}?`)) {
                           try {
-                            const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/users/${p.id}`, { method: 'DELETE' });
+                            const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/users/${p.user_id}`, { method: 'DELETE' });
                             if (res.ok) {
-                              setPatients(patients.filter(patient => patient.id !== p.id));
+                              setPatients(patients.filter(patient => patient.user_id !== p.user_id));
+                              alert("Patient deleted successfully");
+                            } else {
+                              alert("Failed to delete patient");
                             }
                           } catch (err) {
                             console.error("Error deleting patient:", err);
+                            alert("Error deleting patient");
                           }
                         }
                       }}>
@@ -404,30 +408,60 @@ export default function PatientsPage() {
           <div className="space-y-4 mt-2">
             <div className="space-y-2">
               <Label>Name</Label>
-              <Input defaultValue={selectedPatient?.name} />
+              <Input value={selectedPatient?.name} onChange={(e) => setSelectedPatient({ ...selectedPatient, name: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label>Age</Label>
-              <Input defaultValue={selectedPatient?.age} type="number" />
+              <Input value={selectedPatient?.age} type="number" onChange={(e) => setSelectedPatient({ ...selectedPatient, age: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label>Gender</Label>
-              <Input defaultValue={selectedPatient?.gender} />
+              <Input value={selectedPatient?.gender} onChange={(e) => setSelectedPatient({ ...selectedPatient, gender: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label>Phone</Label>
-              <Input defaultValue={selectedPatient?.phone} />
+              <Input value={selectedPatient?.phone} onChange={(e) => setSelectedPatient({ ...selectedPatient, phone: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input defaultValue={selectedPatient?.email} />
+              <Input value={selectedPatient?.email} onChange={(e) => setSelectedPatient({ ...selectedPatient, email: e.target.value })} />
             </div>
           </div>
           <DialogFooter className="mt-4 flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setEditModalOpen(false)}>
               Cancel
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">Save</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={async () => {
+              if (!selectedPatient) return;
+              try {
+                const nameParts = selectedPatient.name.split(' ');
+                const firstName = nameParts[0];
+                const lastName = nameParts.slice(1).join(' ') || "";
+
+                const res = await fetch(`https://clinic-appointment-management-app.onrender.com/api/users/${selectedPatient.user_id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: selectedPatient.email,
+                    phone: selectedPatient.phone,
+                    role: 'client'
+                  })
+                });
+
+                if (res.ok) {
+                  setEditModalOpen(false);
+                  fetchPatients();
+                  alert("Patient updated successfully");
+                } else {
+                  alert("Failed to update patient");
+                }
+              } catch (err) {
+                console.error("Error updating patient:", err);
+                alert("Error updating patient");
+              }
+            }}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
