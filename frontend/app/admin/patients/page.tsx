@@ -148,6 +148,9 @@ export default function PatientsPage() {
         <CardContent className="space-y-4">
 
 
+          <div className="mb-4">
+            <h3 className="text-2xl font-bold">Total Patients: {patients.length}</h3>
+          </div>
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-4">
             <div className="relative w-60">

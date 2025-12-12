@@ -6,8 +6,23 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Calendar, CheckCircle, Clock, Users, UserPlus } from "lucide-react"
 
 export default function DashboardLayout() {
-  const [doctorsCount, setDoctorsCount] = useState(0)
-  const [patientsCount, setPatientsCount] = useState(0)
+  const [appointmentsCount, setAppointmentsCount] = useState(0);
+
+  // Fetch appointments count
+  const fetchAppointments = async () => {
+    try {
+      const response = await fetch("https://clinic-appointment-management-app.onrender.com/api/appointments");
+      if (response.ok) {
+        const data = await response.json();
+        setAppointmentsCount(data.length);
+      }
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    }
+  };
+  const [doctorsCount, setDoctorsCount] = useState(0);
+  const [patientsCount, setPatientsCount] = useState(0);
+
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -24,22 +39,35 @@ export default function DashboardLayout() {
 
     const fetchPatients = async () => {
       try {
-        const response = await fetch("https://clinic-appointment-management-app.onrender.com/api/patients")
-        if (response.ok) {
-          const data = await response.json()
-          setPatientsCount(data.length)
+        // Primary: fetch patients directly
+        const patientsRes = await fetch("https://clinic-appointment-management-app.onrender.com/api/patients");
+        if (patientsRes.ok) {
+          const patientsData = await patientsRes.json();
+          const count = Array.isArray(patientsData) ? patientsData.length : (Array.isArray(patientsData.patients) ? patientsData.patients.length : 0);
+          setPatientsCount(count);
+          return;
+        }
+        // Fallback: fetch users and count those with role 'client'
+        const usersRes = await fetch("https://clinic-appointment-management-app.onrender.com/api/users");
+        if (usersRes.ok) {
+          const usersData = await usersRes.json();
+          const clientCount = usersData.filter((u: any) => u.role === "client").length;
+          setPatientsCount(clientCount);
+        } else {
+          console.error("Failed to fetch patients and fallback users");
         }
       } catch (error) {
-        console.error("Error fetching patients:", error)
+        console.error("Error fetching patients:", error);
       }
     }
 
-    fetchPatients()
-    fetchDoctors()
+    fetchAppointments();
+    fetchPatients();
+    fetchDoctors();
   }, [])
 
   const stats = [
-    { label: "Total Appointments", value: 12, icon: Calendar, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Total Appointments", value: appointmentsCount, icon: Calendar, color: "text-primary", bg: "bg-primary/10" },
     { label: "Scheduled", value: 32, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
     { label: "Completed", value: 99, icon: CheckCircle, color: "text-green-600", bg: "bg-green-50" },
     { label: "Doctors", value: doctorsCount, icon: UserPlus, color: "text-purple-600", bg: "bg-purple-50" },

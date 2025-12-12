@@ -12,14 +12,8 @@ export default function AdminTopbar() {
     <header className="h-16 bg-white border-b flex items-center justify-between px-6">
       <h2 className="text-lg font-semibold capitalize text-gray-700">{title}</h2>
 
-      <div className="flex items-center space-x-4">
-        <select className="border rounded-md p-2 text-sm bg-gray-50 text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary/20">
-          <option>Select Department</option>
-        </select>
-
-        <div className="flex items-center space-x-2">
-          <UserProfileDropdown name="Admin" initial="A" roleLabel="Administrator" />
-        </div>
+      <div className="flex items-center space-x-2">
+        <UserProfileDropdown name="Admin" initial="A" roleLabel="Administrator" />
       </div>
     </header>
   )
